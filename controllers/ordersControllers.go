@@ -64,3 +64,22 @@ func GetOrder(ctx *gin.Context) {
 	},
 	)
 }
+
+func DeleteOrder(ctx *gin.Context) {
+	db := database.GetDB()
+
+	id := ctx.Param("ID")
+
+	order := models.Order{}
+
+	err := db.Where("id =?", id).Delete(&order).Error
+
+	if err != nil {
+		ctx.AbortWithError(http.StatusNotFound, err)
+		return
+	}
+	ctx.JSON(http.StatusCreated, gin.H{
+		"Status": "Delete data berhasil",
+	},
+	)
+}

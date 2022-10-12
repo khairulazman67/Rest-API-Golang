@@ -29,7 +29,7 @@ type Data struct {
 	Item          []Items
 }
 
-func CreateItems(ctx *gin.Context) {
+func CreateOrdersItems(ctx *gin.Context) {
 	db := database.GetDB()
 
 	body := Data{}
@@ -66,7 +66,7 @@ func CreateItems(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
-		"Items": body,
+		"Data": body,
 	},
 	)
 }
