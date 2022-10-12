@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"net/http"
-
 	"assignment_02/database"
 	"assignment_02/models"
+	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,21 +13,51 @@ type ItemsRequestBody struct {
 	Item_code   uint   `json:"item_code"`
 	Description string `json:"description"`
 	Quantity    uint   `json:"quantity"`
+	Items       uint   `json:"item"`
+	Order_id    uint   `json:"Order_id"`
+}
+type Items struct {
+	Item_code   uint   `json:"item_code"`
+	Description string `json:"description"`
+	Quantity    uint   `json:"quantity"`
+	Order_id    uint   `json:"Order_id"`
+}
+
+type Data struct {
+	Ordered_at    time.Time `json:"Ordered_at"`
+	Customer_name string    `json:"Customer_name"`
+	Item          []Items
 }
 
 func CreateItems(ctx *gin.Context) {
 	db := database.GetDB()
-	body := ItemsRequestBody{}
+
+	body := Data{}
 
 	if err := ctx.BindJSON(&body); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	Items := models.Items{
-		Item_code:   body.Item_code,
-		Description: body.Description,
-		Quantity:    body.Quantity,
+	var Items models.Item
+
+	for _, v := range body.Item {
+		Items = models.Item{
+			Item_code:   v.Item_code,
+			Description: v.Description,
+			Quantity:    v.Quantity,
+			Order_id:    v.Order_id,
+		}
+	}
+
+	Orders := models.Order{
+		Customer_name: body.Customer_name,
+		Ordered_at:    body.Ordered_at,
+	}
+
+	if result := db.Create(&Orders); result.Error != nil {
+		ctx.AbortWithError(http.StatusNotFound, result.Error)
+		return
 	}
 
 	if result := db.Create(&Items); result.Error != nil {
@@ -35,5 +65,8 @@ func CreateItems(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, &Items)
+	ctx.JSON(http.StatusCreated, gin.H{
+		"Items": body,
+	},
+	)
 }

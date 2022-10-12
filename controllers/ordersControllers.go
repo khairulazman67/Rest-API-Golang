@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"assignment_02/database"
 	"assignment_02/models"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type OrdersRequestBody struct {
@@ -23,7 +25,7 @@ func CreateOrders(ctx *gin.Context) {
 		return
 	}
 
-	Orders := models.Orders{
+	Orders := models.Order{
 		Customer_name: body.Customer_name,
 		// Ordered_at:    body.Ordered_at,
 	}
@@ -33,5 +35,32 @@ func CreateOrders(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, &Orders)
+	ctx.JSON(http.StatusCreated, gin.H{
+		"orderedAt":    &Orders.Ordered_at,
+		"CustomerName": &Orders.Customer_name,
+		"Items":        &Orders,
+	},
+	)
+}
+
+func GetOrder(ctx *gin.Context) {
+	db := database.GetDB()
+
+	Order := models.Order{}
+
+	err := db.Find(&Order).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			ctx.AbortWithError(http.StatusNotFound, err)
+			return
+		}
+		ctx.AbortWithError(http.StatusNotFound, err)
+		// print("Error finding user : ", err)
+	}
+	// fmt.Printf("User Data : %+v \n", Order)
+	ctx.JSON(http.StatusCreated, gin.H{
+		"order": Order,
+	},
+	)
 }
